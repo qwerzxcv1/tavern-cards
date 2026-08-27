@@ -144286,7 +144286,13 @@ var TavernCardsState = object({
   depth_defaults: DepthDefaults.default({ role: "system", depth: 0 }).describe("at_depth \u4F4D\u7F6E\u7684\u9ED8\u8BA4 role/depth"),
   avatar: string2().optional().describe("\u5934\u50CF PNG \u8DEF\u5F84, \u76F8\u5BF9\u4E8E\u9879\u76EE\u6839\u76EE\u5F55"),
   description: string2().default("").describe("\u89D2\u8272\u63CF\u8FF0"),
+  personality: string2().optional().describe("\u6027\u683C\u6458\u8981"),
+  scenario: string2().optional().describe("\u60C5\u666F\u8BBE\u5B9A"),
   first_messages: array(string2()).default([]).describe("\u5F00\u573A\u767D\u5185\u5BB9/\u6587\u4EF6\u8DEF\u5F84\u6570\u7EC4, [0]=first_mes, [1:]=alternate_greetings"),
+  mes_example: string2().optional().describe("\u5BF9\u8BDD\u793A\u4F8B"),
+  system_prompt: string2().optional().describe("\u89D2\u8272\u5361\u7CFB\u7EDF\u63D0\u793A, pack \u65F6\u4EC5\u5199\u5165 data.*"),
+  post_history_instructions: string2().optional().describe("\u5386\u53F2\u540E\u6307\u4EE4 / PHI, pack \u65F6\u4EC5\u5199\u5165 data.*"),
+  tags: array(string2()).optional().describe("\u89D2\u8272\u6807\u7B7E"),
   creator: string2().default("").describe("\u521B\u5EFA\u8005"),
   creator_notes: string2().default("").describe("\u521B\u5EFA\u8005\u5907\u6CE8"),
   version: string2().default("1.0").describe("\u89D2\u8272\u7248\u672C"),
@@ -144587,6 +144593,8 @@ function toSillyTavernEntry(leaf, index2, depthDefaults) {
     selective: isSelective,
     insertion_order: position.order,
     enabled: leaf.enabled !== false,
+    // 顶层 position 按 CCv2 spec / ST charaFormatData 只区分 before_char / after_char,
+    // 完整位置(at_depth 等)在 extensions.position 数字, 与 ST 原生导出一致
     position: position.type === "before_character_definition" ? "before_char" : "after_char",
     use_regex: true,
     extensions: {
@@ -144632,32 +144640,32 @@ function buildSillyTavernCharacter(state, leaves, depthDefaults) {
   return {
     name: state.projectName,
     description: state.description,
-    personality: "",
-    scenario: "",
+    personality: state.personality ?? "",
+    scenario: state.scenario ?? "",
     first_mes: firstMes,
-    mes_example: "",
+    mes_example: state.mes_example ?? "",
     creatorcomment: state.creator_notes,
     avatar: "none",
     talkativeness: "0.5",
     fav: false,
-    tags: [],
+    tags: state.tags ?? [],
     spec: "chara_card_v3",
     spec_version: "3.0",
     create_date: state.create_date ?? "",
     data: {
       name: state.projectName,
       description: state.description,
-      personality: "",
-      scenario: "",
+      personality: state.personality ?? "",
+      scenario: state.scenario ?? "",
       first_mes: firstMes,
-      mes_example: "",
+      mes_example: state.mes_example ?? "",
       creator_notes: state.creator_notes,
       creator: state.creator,
       character_version: state.version,
       alternate_greetings: altGreetings,
-      system_prompt: "",
-      post_history_instructions: "",
-      tags: [],
+      system_prompt: state.system_prompt ?? "",
+      post_history_instructions: state.post_history_instructions ?? "",
+      tags: state.tags ?? [],
       extensions: {
         world: state.worldbookName,
         regex_scripts: state.regex_scripts ? toSillyTavernRegexScripts(state.regex_scripts) : [],
@@ -149143,13 +149151,29 @@ function convertTavernHelperToState(raw) {
   }
   return result.scripts !== void 0 || result.variables !== void 0 ? result : void 0;
 }
+function normalizeTags(raw) {
+  if (Array.isArray(raw)) {
+    return raw.filter((t) => typeof t === "string").map((t) => t.trim()).filter(Boolean);
+  }
+  if (typeof raw === "string") {
+    return raw.split(",").map((t) => t.trim()).filter(Boolean);
+  }
+  return [];
+}
 function buildCharacterMeta(data) {
   return {
     description: data.data?.description ?? data.description ?? "",
+    personality: data.data?.personality ?? data.personality ?? "",
+    scenario: data.data?.scenario ?? data.scenario ?? "",
     first_messages: [
       data.data?.first_mes ?? data.first_mes ?? "",
       ...data.data?.alternate_greetings ?? []
     ].filter((g) => g && g.trim()),
+    mes_example: data.data?.mes_example ?? data.mes_example ?? "",
+    // system_prompt / post_history_instructions 按 ST 规范只活在 data.*; 顶层 fallback 只防畸形卡
+    system_prompt: data.data?.system_prompt ?? data.system_prompt ?? "",
+    post_history_instructions: data.data?.post_history_instructions ?? data.post_history_instructions ?? "",
+    tags: normalizeTags(data.data?.tags ?? data.tags),
     creator: data.data?.creator ?? "",
     creator_notes: data.data?.creator_notes ?? data.creatorcomment ?? "",
     version: data.data?.character_version ?? "",
@@ -149302,7 +149326,13 @@ function mergeWithExistingState(newState, oldState, oldStateDir, newContentLooku
     worldbookName: newState.worldbookName,
     form: newState.form,
     description: newState.description,
+    personality: newState.personality,
+    scenario: newState.scenario,
     first_messages: newState.first_messages,
+    mes_example: newState.mes_example,
+    system_prompt: newState.system_prompt,
+    post_history_instructions: newState.post_history_instructions,
+    tags: newState.tags,
     creator: newState.creator,
     creator_notes: newState.creator_notes,
     version: newState.version,
@@ -149715,6 +149745,11 @@ async function runUnpack(project, opts) {
       extensions: characterMeta.extensions,
       regex_scripts: characterMeta.regex_scripts
     });
+    for (const key of ["personality", "scenario", "mes_example", "system_prompt", "post_history_instructions"]) {
+      const value2 = characterMeta[key];
+      if (value2) state[key] = value2;
+    }
+    if (characterMeta.tags?.length) state.tags = characterMeta.tags;
   }
   if (detectMvu(state)) {
     state.mvu = true;

@@ -83,6 +83,12 @@ typeLists 的三个位置通常各有侧重：`before_char` 放宏观条目，`a
        ...
    ```
 
+6. **角色卡标签**（角色卡时）：向用户说明标签会显示在酒馆的角色列表里，方便按类型找到这张卡，并询问是否填写。用户同意后，根据 `design-spec.md` 已记录的主题、体验目标、风格意向、情感落点整理一组简短候选，供用户选择、改写或补充；选定后写入 state：
+
+```bash
+node scripts/tavern-cards-forge.mjs patch {project} '[{"op": "add", "path": "/tags", "value": ["标签1", "标签2"]}]'
+```
+
 ## typeLists 默认配置
 
 ```json

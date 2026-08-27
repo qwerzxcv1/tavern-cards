@@ -145,20 +145,10 @@
 - **part** / **scope** / **rephrase**：根据条目类型和用途设置
 - **keywords**：查上方 keywords 建议
 
-## 语法冲突规避
+## `content` 与 `file` 分工
 
-当内容包含 YAML 语法冲突时，使用 `contents` 数组将冲突部分作为内联 `content` 处理。
-
-EJS 模板语法：
-
-```json
-{
-  "contents": [
-    { "file": "世界书/角色/基础设定.yaml" },
-    { "content": "<%_ if (current_stage === 'stage1') { _%>\n阶段1的特殊内容\n<%_ } _%>" }
-  ]
-}
-```
+条目正文写在 `file` 指向的内容文件里。`content` 片段放 EJS 装饰器（如 `@@if`、`@@private`）和 XML 标签。
+注册命令见下方「注册示例」。
 
 ## patch 命令用法
 

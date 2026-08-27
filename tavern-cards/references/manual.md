@@ -110,7 +110,13 @@
   "depth_defaults": { "role": "system", "depth": 0 },
   "avatar": "avatar.png",
   "description": "角色描述",
+  "personality": "性格摘要",           // 可选，空时缺省
+  "scenario": "情景设定",              // 可选，空时缺省
   "first_messages": ["开场白/0.txt", "开场白/1.txt"],
+  "mes_example": "对话示例",           // 可选，空时缺省
+  "system_prompt": "角色卡系统提示",   // 可选，空时缺省，pack 时仅写入 data.*
+  "post_history_instructions": "历史后指令", // 可选，空时缺省，pack 时仅写入 data.*
+  "tags": ["tag1", "tag2"],            // 可选，空时缺省
   "creator": "Author",
   "version": "1.0",
   "entryManifest": {
@@ -175,6 +181,7 @@ node scripts/tavern-cards-forge.mjs pack <project> [--state <path>] [--output <p
    - **Zod 脚本生成**：由 `state.zod` 驱动，从 `schemaPath` 重建；Zod 脚本内容直接注入产出物
    - **initvar_override 嵌入**：若 `state.initvar_overrides` 存在，对应开场白末尾的 `<UpdateVariable><initvar>` 块更新为 override YAML 内容
    - **状态栏占位符追加**（`state.mvu === true` 时）：`.txt` 开场白文件末尾自动追加 `<StatusPlaceHolderImpl/>`，内容已含占位符时跳过；`.md` 等其他后缀与内联文本不追加
+   - **角色卡元数据**：`personality`、`scenario`、`mes_example`、`tags` 缺省时按 `''`/`[]` 写入卡内；`system_prompt` / `post_history_instructions` 仅写入 `data.*`
 5. **写出**：按 [支持的格式](#支持的格式) 选择输出格式并写出。两个自动处置：
    - `avatar` 非空但文件内容不是合法 PNG（损坏文件或非 PNG 图片）时，回退输出角色 JSON 卡并警告
    - 产物路径后缀与实际格式不符时（如配置 `.png` 但实际输出 JSON），自动替换为正确后缀并警告，避免 JSON 写入 `.png` 后缀文件导致酒馆导入失败
@@ -219,7 +226,7 @@ node scripts/tavern-cards-forge.mjs unpack <project> [--file <path>] [--output <
 8. `first_messages` 写入 `开场白/{index}.{txt|md}`
    - 后缀分流（`mvu === true` 时）：内容含 `<StatusPlaceHolderImpl/>` 存 `.txt`（打包时幂等跳过追加），不含存 `.md`（打包时不追加）；非 MVU 项目恒 `.txt`。保证解包后再次打包与原始卡一致
    - `mvu === true` 时，对所有开场白检测 `<UpdateVariable><initvar>` 块，写出为 `开场白/initvar/{index}.yaml`，填充 `initvar_overrides` 映射
-9. 生成 `tavern-cards-state.json`
+9. 生成 `tavern-cards-state.json`：角色卡的 `description`、`first_messages` 写入 state；`personality`、`scenario`、`mes_example`、`system_prompt`、`post_history_instructions`、`tags` 非空时写入（空值缺省，pack 时按空值写回卡内）
 
 **merge 模式**（默认行为）：当存在已有 state.json 时，将新解包数据与已有 state 合并：
 - 两轮匹配：第一轮按条目名 (comment) 匹配；第二轮按归一化内容匹配（检测重命名）
@@ -563,6 +570,7 @@ node scripts/tavern-cards-forge.mjs split adhoc --file ./MyCharacter.png --kind 
 | `form` | `"charactercard"` | `"charactercard"` | `"worldbook"` |
 | `avatar` | `"avatar.png"` | `""` | 缺省 |
 | `first_messages` | `["开场白/0.txt", ...]` | 同上 | `[]` |
+| `personality` / `scenario` / `mes_example` / `system_prompt` / `post_history_instructions` / `tags` | 可选，空时缺省 | 同左 | 缺省 |
 | `extensions` | `{ tavern_helper: {...} }` | 同上 | 缺省 |
 | `initvar_overrides` | MVU 项目可选（`{ "开场白/1.txt": "开场白/initvar/1.yaml" }`）；无 override 时缺省 | 同左 | 缺省（worldbook 恒 mvu=false，superRefine 校验禁止此字段） |
 | `zod` | MVU 项目可选（ZodDescriptor，pack 据此重建 Zod 脚本） | 同左 | 缺省 |
