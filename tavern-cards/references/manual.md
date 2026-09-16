@@ -42,7 +42,11 @@
 | 角色卡（JSON） | JSON | `character_book` 嵌套格式，无头像 |
 | 独立世界书 | JSON | 扁平格式 |
 
-输出格式由 `form` 和 `avatar` 决定：`form = "worldbook"` → 扁平 JSON；`form = "charactercard"` 且 `avatar` 非空 → PNG；`form = "charactercard"` 且 `avatar` 为空 → JSON。角色卡条目嵌套在 `extensions` 中；独立世界书使用扁平字段名（如 `order` 而非 `insertion_order`）。
+**输出格式选择规则**：
+
+- `form = "worldbook"` → 独立世界书 JSON（扁平格式）
+- `form = "charactercard"` 且 `avatar` 非空 → 角色 PNG 卡（`character_book` 嵌套格式）；若 avatar 内容不是合法 PNG，回退 JSON（嵌套格式）并警告
+- `form = "charactercard"` 且 `avatar` 为空 → 角色 JSON 卡（`character_book` 嵌套格式）
 
 ## 配置文件
 

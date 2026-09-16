@@ -7272,8 +7272,8 @@ var require_util_map_includes = __commonJS({
       const { uniqueKeys } = ctx.options;
       if (uniqueKeys === false)
         return false;
-      const isEqual2 = typeof uniqueKeys === "function" ? uniqueKeys : (a, b) => a === b || identity.isScalar(a) && identity.isScalar(b) && a.value === b.value;
-      return items.some((pair) => isEqual2(pair.key, search));
+      const isEqual = typeof uniqueKeys === "function" ? uniqueKeys : (a, b) => a === b || identity.isScalar(a) && identity.isScalar(b) && a.value === b.value;
+      return items.some((pair) => isEqual(pair.key, search));
     }
     exports.mapIncludes = mapIncludes;
   }
@@ -127126,7 +127126,7 @@ var require_lodash = __commonJS({
           }
           return mapped.length && mapped[0] === arrays[0] ? baseIntersection(mapped, undefined2, comparator) : [];
         });
-        function join8(array2, separator) {
+        function join7(array2, separator) {
           return array2 == null ? "" : nativeJoin.call(array2, separator);
         }
         function last(array2) {
@@ -127905,7 +127905,7 @@ var require_lodash = __commonJS({
           }
           return true;
         }
-        function isEqual2(value2, other) {
+        function isEqual(value2, other) {
           return baseIsEqual(value2, other);
         }
         function isEqualWith(value2, other, customizer) {
@@ -129023,7 +129023,7 @@ var require_lodash = __commonJS({
         lodash.isDate = isDate;
         lodash.isElement = isElement;
         lodash.isEmpty = isEmpty;
-        lodash.isEqual = isEqual2;
+        lodash.isEqual = isEqual;
         lodash.isEqualWith = isEqualWith;
         lodash.isError = isError;
         lodash.isFinite = isFinite2;
@@ -129050,7 +129050,7 @@ var require_lodash = __commonJS({
         lodash.isUndefined = isUndefined;
         lodash.isWeakMap = isWeakMap;
         lodash.isWeakSet = isWeakSet;
-        lodash.join = join8;
+        lodash.join = join7;
         lodash.kebabCase = kebabCase;
         lodash.last = last;
         lodash.lastIndexOf = lastIndexOf;
@@ -144629,7 +144629,6 @@ function toSillyTavernEntry(leaf, index2, depthDefaults) {
       match_creator_notes: false,
       triggers: [],
       ignore_budget: false
-      // extra 字段已移除（v0.x 破坏性变更）；额外扩展请直接在 extensions 上添加
     }
   };
 }
@@ -147988,7 +147987,7 @@ function createJiti(id, opts = {}) {
 }
 
 // src/util/mvu_schema.ts
-var _ = __toESM(require_lodash(), 1);
+var import_lodash = __toESM(require_lodash(), 1);
 var yaml2 = __toESM(require_dist(), 1);
 
 // src/util/schema_dup_keys.ts
@@ -148353,9 +148352,9 @@ var ST_SCRIPT_DEFAULTS = {
 };
 function stripScriptDefaults(script) {
   const out = {};
-  if (script.info !== void 0 && !_.isEqual(script.info, ST_SCRIPT_DEFAULTS.info)) out.info = script.info;
-  if (script.button !== void 0 && !_.isEqual(script.button, ST_SCRIPT_DEFAULTS.button)) out.button = script.button;
-  if (script.data !== void 0 && !_.isEqual(script.data, ST_SCRIPT_DEFAULTS.data)) out.data = script.data;
+  if (script.info !== void 0 && !import_lodash.default.isEqual(script.info, ST_SCRIPT_DEFAULTS.info)) out.info = script.info;
+  if (script.button !== void 0 && !import_lodash.default.isEqual(script.button, ST_SCRIPT_DEFAULTS.button)) out.button = script.button;
+  if (script.data !== void 0 && !import_lodash.default.isEqual(script.data, ST_SCRIPT_DEFAULTS.data)) out.data = script.data;
   return out;
 }
 function restoreScriptDefaults(zod) {
@@ -148480,7 +148479,7 @@ async function loadMvuSchema(schemaPath, options) {
   const jiti = createJiti(import.meta.url, { interopDefault: true });
   const globalZ = globalThis;
   if (!globalZ.z) globalZ.z = zod_exports;
-  if (!globalZ._) globalZ._ = _;
+  if (!globalZ._) globalZ._ = import_lodash.default;
   const { Schema } = await jiti.import(schemaPath);
   if (!Schema) {
     throw new Error("schema.ts does not export Schema");
@@ -148603,7 +148602,7 @@ function resolvePackState(state, stateDir, zodSubject) {
   }
   return packState;
 }
-function buildWorldbookJson(state, stateDir, depthDefaults) {
+function buildWorldbookJson(state, stateDir) {
   const resolved = resolveFiles(state, stateDir);
   const raw = buildFlatWorldbook(resolved);
   return JSON.stringify(raw, null, 2);
@@ -148832,7 +148831,7 @@ async function runPack(project, opts) {
     }
   }
   if (state.form === "worldbook") {
-    const json2 = buildWorldbookJson(state, stateDir, cardrc.depth_defaults);
+    const json2 = buildWorldbookJson(state, stateDir);
     output = writeArtifact(output, stateDir, state.worldbookName, "json", json2);
     console.log(`Packed worldbook \u2192 ${output}`);
   } else {
@@ -153056,7 +153055,7 @@ function characterBookEntryToFlat(entry, index2) {
     addMemo: false,
     order: entry.insertion_order,
     position: ext.position ?? (entry.position === "before_char" ? 0 : 1),
-    disable: entry.enabled !== true,
+    disable: entry.enabled === false,
     ignoreBudget: ext.ignore_budget ?? false,
     excludeRecursion: ext.exclude_recursion ?? true,
     preventRecursion: ext.prevent_recursion ?? true,
@@ -153303,7 +153302,7 @@ async function runSplit(project, opts) {
     requireConfiguredProject(project, projectFound, "Without a configured project, --file is required.");
   }
   const cwd = process.cwd();
-  const filePath = opts.file ? resolve18(cwd, opts.file) : opts.file ?? artifactPath;
+  const filePath = opts.file ? resolve18(cwd, opts.file) : artifactPath;
   if (!filePath) {
     throw new ProjectNotFoundError(project, "Provide --file to specify input.");
   }
