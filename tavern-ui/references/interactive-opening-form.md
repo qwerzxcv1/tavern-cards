@@ -81,15 +81,19 @@ $(() => { errorCatched(init)(); });
 - 界面路径：`界面/状态栏/` → `界面/开局表单/`
 - 正则文件名：`正则/状态栏界面.html` → `正则/开局表单界面.html`
 
-以 CDN 写法为例（首尾各一行纯三反引号须保留）：
+以 CDN 写法为例（格式铁律同状态栏：` ```html ` 围栏 + `<!DOCTYPE html>` 完整 HTML 文档）：
 
 ````
-```
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head></head>
 <body>
 <script>
 $('body').load('https://testingcf.jsdelivr.net/gh/{GH_USER}/{GH_REPO}/dist/{ProjectName}/界面/开局表单/index.html')
 </script>
 </body>
+</html>
 ```
 ````
 

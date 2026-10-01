@@ -218,15 +218,19 @@ regex_scripts 是 SillyTavern 的消息处理管道中的一环。每个脚本�
 
 在 `正则/` 目录下创建 `XXX界面.html`。根据 HTML 是否包含 `<body>` 决定文件结构：
 
-**含 `<body>`（前端界面）**——文件首尾需用 3 个反引号行包裹成独立代码块，酒馆据此将含 `<body>` 的内容渲染为独立前端界面（HTML 规范不允许 `<body>` 嵌套在内联消息流中）：
+**含 `<body>`（前端界面）**——文件整体是一个「` ```html ` 围栏 + `<!DOCTYPE html>` 完整 HTML 文档」代码块，酒馆助手据此将内容渲染为独立前端界面（HTML 规范不允许 `<body>` 嵌套在内联消息流中）。**格式铁律**：围栏必须带 `html` 语言标记、文档必须以 `<!DOCTYPE html>` + `<html>` 开头、`</html>` 结尾；裸 ` ``` ` 围栏或只有 `<head>…</head><body>…</body>` 片段（如 webpack 编译产物原样内联）不会被渲染成界面，会显示为裸代码块：
 
-````
-```
+````html
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head></head>
 <body>
 <script>
 $('body').load('https://testingcf.jsdelivr.net/gh/{USER}/{REPO}/dist/{Project}/...')
 </script>
 </body>
+</html>
 ```
 ````
 

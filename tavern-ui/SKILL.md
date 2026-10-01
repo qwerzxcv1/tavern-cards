@@ -197,15 +197,19 @@ pnpm watch
 
 #### 配置预览正则
 
-将项目中的 `正则/状态栏界面.html` 临时改为加载本地服务器。该文件首尾各占一行纯三反引号（` ``` `，不带语言标记）作为代码块标记，修改时需保留这两行。
+将项目中的 `正则/状态栏界面.html` 临时改为加载本地服务器。该文件必须是「` ```html ` 围栏 + `<!DOCTYPE html>` 完整 HTML 文档」格式（见步骤 8 的格式说明），修改时保留围栏与文档骨架。
 
 ````
-```
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head></head>
 <body>
 <script>
 $('body').load('http://localhost:5500/dist/{ProjectName}/界面/状态栏/index.html')
 </script>
 </body>
+</html>
 ```
 ````
 
@@ -235,17 +239,28 @@ pnpm build
 
 ### 8. 更新占位符
 
-部署完成后，修改项目中的 `正则/状态栏界面.html`（文件首尾各一行纯三反引号 ` ``` ` 作为代码块标记，须保留）。
+部署完成后，修改项目中的 `正则/状态栏界面.html`。
+
+**格式铁律（不符合则酒馆助手不渲染，界面显示为裸代码块）**：
+
+1. 文件整体是一个代码块：首行围栏必须带 `html` 语言标记（` ```html `），末行为 ` ``` `；
+2. 围栏内容必须是完整 HTML 文档：以 `<!DOCTYPE html>` + `<html lang="zh-CN">` 开头、`</html>` 结尾；
+
+> 实测（2026-10-01）：裸 ` ``` ` 围栏或只有 `<head>…</head><body>…</body>` 片段（webpack HtmlWebpackPlugin 产物原样）都不会被渲染成前端界面；编译产物必须补上 DOCTYPE 与 `<html>` 包裹。已验证可渲染的格式即下文示例（与社区可用卡一致）。
 
 **CDN / 自托管写法**（仅加载链接）：
 
 ````
-```
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head></head>
 <body>
 <script>
 $('body').load('https://testingcf.jsdelivr.net/gh/{GH_USER}/{GH_REPO}/dist/{ProjectName}/界面/状态栏/index.html')
 </script>
 </body>
+</html>
 ```
 ````
 
@@ -256,15 +271,19 @@ $('body').load('https://testingcf.jsdelivr.net/gh/{GH_USER}/{GH_REPO}/dist/{Proj
 
 **全量内联写法**（无 CDN，直接贴入编译产物）：
 
-源文件在模板仓库 `tavern_helper_template/dist/{ProjectName}/界面/状态栏/index.html`，目标文件在用户项目的 `正则/状态栏界面.html`，二者分处不同目录。在 `tavern_helper_template` 根目录执行以下命令，把编译产物连同首尾三反引号行写入目标文件（`{ProjectName}` 替换为真实项目名；目标路径按项目实际位置调整）：
+源文件在模板仓库 `tavern_helper_template/dist/{ProjectName}/界面/状态栏/index.html`，目标文件在用户项目的 `正则/状态栏界面.html`，二者分处不同目录。dist 产物是 `<head>…</head><body>…</body>` 片段，**直接内联不会被渲染**，必须补上 ` ```html ` 围栏和 DOCTYPE/`<html>` 包裹。在 `tavern_helper_template` 根目录执行以下命令（`{ProjectName}` 替换为真实项目名；目标路径按项目实际位置调整）：
 
 ```bash
 {
-  echo '```'
+  echo '```html'
+  printf '<!DOCTYPE html>\n<html lang="zh-CN">\n'
   cat "dist/{ProjectName}/界面/状态栏/index.html"
+  printf '\n</html>\n'
   echo '```'
 } > "{ProjectName}/正则/状态栏界面.html"
 ```
+
+写完后自查两项：首行为 ` ```html ` 且第二行为 `<!DOCTYPE html>`；末尾依次为 `</html>`、` ``` ` 各占一行。dist 产物本身不含连续三反引号，不会破坏围栏。
 
 > 注意：内联方案会让正则代码块体积显著增大（含全部 CSS/JS），酒馆渲染负担较重。仅在无 CDN 条件时使用。
 
